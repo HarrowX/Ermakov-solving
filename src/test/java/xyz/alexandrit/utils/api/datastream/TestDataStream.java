@@ -1,7 +1,5 @@
 package xyz.alexandrit.utils.api.datastream;
 
-import org.junit.jupiter.api.Assertions;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
@@ -66,8 +64,8 @@ public class TestDataStream {
     void check_filter_collect() {
         var out = DataStream
                 .of(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-                .filter((el) -> el >= 5)
-                .collect(ArrayList::new, ArrayList::add);
+                .filter(x -> x >= 5)
+                .toList();
         assertEquals(List.of(5, 6, 7, 8, 9, 10), out);
     }
 
@@ -75,9 +73,9 @@ public class TestDataStream {
     void check_filter_filter_collect() {
         var out = DataStream
                 .of(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-                .filter((el) -> el < 7)
-                .filter((el) -> el > 3)
-                .collect(ArrayList::new, ArrayList::add);
+                .filter(x -> x < 7)
+                .filter(x -> x > 3)
+                .toList();
         assertEquals(List.of(4, 5, 6), out);
     }
 
@@ -85,10 +83,10 @@ public class TestDataStream {
     void check_filter_filter_filter_collect() {
         var out = DataStream
                 .of(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10))
-                .filter((el) -> el < 7)
-                .filter((el) -> el != 5)
-                .filter((el) -> el > 3)
-                .collect(ArrayList::new, ArrayList::add);
+                .filter(x -> x < 7)
+                .filter(x -> x != 5)
+                .filter(x -> x > 3)
+                .toList();
         assertEquals(List.of(4, 6), out);
     }
 
@@ -97,8 +95,8 @@ public class TestDataStream {
         assertEquals(
             List.of(1, 4, 9, 16, 25),
             DataStream.of(List.of(1, 2, 3, 4, 5))
-                .map((el) -> el * el)
-                .collect(ArrayList::new, ArrayList::add)
+                    .map(x -> x * x)
+                    .toList()
         );
     }
 
@@ -107,9 +105,9 @@ public class TestDataStream {
         assertEquals(
                 List.of(2, 5, 10, 17, 26),
                 DataStream.of(List.of(1, 2, 3, 4, 5))
-                        .map((el) -> el * el)
-                        .map((el)->el+1)
-                        .collect(ArrayList::new, ArrayList::add)
+                        .map(x -> x * x)
+                        .map(x->x+1)
+                        .toList()
         );
     }
 
@@ -118,9 +116,59 @@ public class TestDataStream {
         assertEquals(
                 List.of(16, 25),
                 DataStream.of(List.of(1, 2, 3, 4, 5))
-                        .filter((el)->el>3)
-                        .map((el) -> el * el)
-                        .collect(ArrayList::new, ArrayList::add)
+                        .filter(x->x>3)
+                        .map(x ->  x * x)
+                        .toList()
+        );
+    }
+
+    @Test
+    void check_gc_mapped_collect() {
+        var list = List.of(1, 2, 3, 4, 5);
+        var stream = DataStream.of(list).map(x->x*2);
+        System.gc();
+        var out = stream.toList();
+        assertEquals(
+                List.of(2, 4, 6, 8, 10),
+                out
+        );
+    }
+    @Test
+    void check_absence_npe() {
+        var stream = DataStream.of(null);
+        var list = stream.toList();
+        assertEquals(new ArrayList<>(), list);
+    }
+
+    @Test
+    void check_gc_mapped_mapped_collect() {
+        var list = List.of(1, 2, 3, 4, 5);
+        var stream = DataStream.of(list)
+                .map(x->x*2)
+                .map(x->x+1);
+        System.gc();
+        var out = stream.toList();
+        assertEquals(
+                List.of(3, 5, 7, 9, 11),
+                out
+        );
+    }
+    @Test
+    void check_gc_mapped_mapped_timer_collect() {
+        var list = List.of(1, 2, 3, 4, 5);
+        var stream = DataStream.of(list)
+                .map(x->x*2)
+                .map(x->x+1);
+        System.gc();
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        var out = stream.toList();
+        assertEquals(
+                List.of(3, 5, 7, 9, 11),
+                out
         );
     }
 }

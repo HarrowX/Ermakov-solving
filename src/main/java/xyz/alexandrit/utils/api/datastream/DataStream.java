@@ -6,12 +6,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.*;
 
-
 public class DataStream<T> {
     Supplier<List<T>> supplierList;
 
     DataStream(List<T> list) {
-        supplierList = () -> list;
+        this(() -> list != null ? list : List.of());
     }
 
     DataStream(Supplier<List<T>> supplier) {
@@ -47,7 +46,7 @@ public class DataStream<T> {
         return new DataStream<>(supplierFilteredList);
     }
 
-    public Optional<T> reduce(BinaryOperator<T> accumulator) {
+    public Optional<T> reduce(BinaryOperator<T> operator) {
         List<T> list = supplierList.get();
         if (list.isEmpty())
             return Optional.empty();
@@ -56,7 +55,7 @@ public class DataStream<T> {
         T reducingValue = iterator.next();
 
         while (iterator.hasNext()) {
-            reducingValue = accumulator.apply(reducingValue, iterator.next());
+            reducingValue = operator.apply(reducingValue, iterator.next());
         }
 
         return Optional.ofNullable(reducingValue);
@@ -73,6 +72,10 @@ public class DataStream<T> {
         }
 
         return collectedList;
+    }
+
+    public List<T> toList() {
+        return collect(ArrayList::new, ArrayList::add);
     }
 }
 
