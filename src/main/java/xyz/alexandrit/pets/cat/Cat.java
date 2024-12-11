@@ -1,15 +1,16 @@
-package xyz.alexandrit.animals;
+package xyz.alexandrit.pets.cat;
 
-import lombok.AllArgsConstructor;
+
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public class Cat implements Meowable {
+public class Cat implements Meowing {
     @NonNull
-    String name;
+    private String name;
+
     @Override
     public void meow() {
         System.out.println("meow");
