@@ -30,6 +30,7 @@ public class DataStream<T> {
             }
             return mappedList;
         };
+
         return new DataStream<>(supplierMappedList);
     }
 
